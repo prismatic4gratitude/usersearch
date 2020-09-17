@@ -11,16 +11,18 @@ class UserController extends Controller
         $query = $request->q;
 
         if ($query) {
-            $users = User::where('name', 'like', '%' . $query . '%')->orWhere('email', 'like', '%' . $query . '%')->get();
+            $users = User::where('name', 'like', '%' . $query . '%')->orWhere('email', 'like', '%' . $query . '%')->orderBy('name')->get();
         }
 
         else {
-            $users = User::all();
+            $users = User::orderBy('name')->get();
         }
 
         $message = count($users) === 0 ? 'No users found matching the query' : 'Found '. count($users) . ' users matching the query';
 
-        return response()->json(compact('users','message'));
+        if ($query) $message .= ' "' . $query .'"';
+
+        return view('users', compact('users','message'));
     }
 
     public function getSingle($id) {
@@ -45,6 +47,7 @@ class UserController extends Controller
         $user->phone_number = $request->phone_number;
         $user->gender = $request->gender;
 
+        $user->save();
         $message = "User created successfully";
 
         return response()->json(compact('user','message'));
@@ -54,7 +57,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'email'  =>  'required|unique:users,id,'.$id,
-            'phone_number' => 'required|unique:users',
+            'phone_number' => 'required|unique:users,id,'.$id,
             'gender' => 'required|in:male,female'
         ]);
 
@@ -64,6 +67,7 @@ class UserController extends Controller
         $user->phone_number = $request->phone_number;
         $user->gender = $request->gender;
 
+        $user->save();
         $message = "User details updated successfully";
 
         return response()->json(compact('user','message'));
